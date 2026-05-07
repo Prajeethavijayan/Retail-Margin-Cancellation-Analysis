@@ -1,0 +1,94 @@
+# Retail Margin & Cancellation Analysis
+
+## Business Problem
+A retail company is experiencing margin pressure despite growing revenue. 
+This project investigates the root causes of margin leakage across ~1M transactions (2009–2011) and quantifies recoverable value for 
+executive decision-making.
+
+## Dataset
+- **Source:** [Online Retail II — UCI Machine Learning Repository]
+  (https://archive.ics.uci.edu/dataset/502/online+retail+ii)
+- **Size:** ~1M transactions, 2009–2011
+- **Tool Stack:** Google BigQuery . Excel 
+
+## Methodology
+1. Data profiling and quality assessment
+2. Month-over-month (gross sales) revenue and volume trend analysis
+3. Cancellation investigation — product, customer
+4. Pricing inconsistency detection across SKUs
+5. Executive summary with quantified recommendations
+
+ ## Key Findings
+
+### Finding 1 — Non-Product Cancellations: £753K (Finance Governance)
+
+On identifying top 10 cancellation products, some entries like 'Amazon fee','Bank charges' were spotted. They are not product cancellation. They are finance goveranance fix.
+
+| Category | Value | Transactions |
+|---|---|---|
+| Manual adjustments | £424K | 538 |
+| Amazon fees | £295K | 39 |
+| Bank charges | £34K | 63 |
+
+**Root cause:** Fee and adjustment entries being processed as cancellable transactions with no approval controls.  
+
+**Recommendation:** Separate non-product adjustments into a controlled journal entry workflow outside the order management system.
+
+### Finding 2 — High Risk Accounts: £310K (Account Management)
+40 customers (0.7% of base) are responsible for 43% of all cancelled order value.
+
+Identified customers based on cancellation rate and categorized them 
+
+cancellation_risk_segment |	customer_count |	total_purchase_value |	total_cancelled_value	| Cancellation %
+High (>50%) |	40	| 339,861 |	 310,320 |	91%
+Medium (10–50%)	| 256	| 796,045 	| 144,141 |	18%
+Low (<10%)	| 2120	| 12,707,135 |	 264,074 |	2%
+No cancellations	| 3437	| 3,616,859 |	 22 |	0%
+
+**Root cause:** No cancellation penalty or deposit requirement for large wholesale orders.  
+**Recommendation:** Introduce a 2-tier intervention — immediate review of 40 flagged accounts + deposit policy for orders above £5K.
+
+
+### Finding 3 — Zero - price orders: £1.86M (IT/ Order Management)
+
+This explains the August 2010 anamoly - 243,000 units across 1,901 invoices and 1,324 distinct products were shipped with a unit price of £0.
+At average selling price, this implies unrecorded revenue of £1.86M.
+
+August 2010 breakdown:
+On August 5, 2010, a single anonymous session placed 8 separate orders for StockCodes 22752–22759 totalling 49,600 units at £0. 
+This single event accounts for the entire August 2010 anomaly — units +39% MoM with revenue barely moving.
+
+Important Caveat : The £1.86M is implied revenue, not confirmed loss. A portion of zero-price transactions likely represents:
+
+Internal stock transfers incorrectly recorded in the sales table
+Promotional samples with no intended revenue
+Replacement orders for damaged goods
+
+Conservative estimate: even if 80% are legitimate write-offs, £372K remains unexplained and unrecovered.
+
+**Recommendation:** Create a separate stock movement transaction type for internal transfers so they are not counted in sales reporting and mandatory price validation rule.
+
+### Finding 4 — Extreme Price Variance (Single Product): £2,907
+
+StockCode 84016 (FLAG OF ST GEORGE CAR FLAG) was sold to anonymous accounts at prices ranging from £93.61 to £1,157.15 against a wholesale baseline of £0.42 — a variance of up to 2,755x.
+
+This could be retail vs wholesale pricing tiers, but absence of  customer records makes it less likely to be legitimate.
+
+Recommendation: Cross-reference against the product price master. Introduce a system alert for any transaction priced above 10x the product's rolling average.
+Require manager approval for overrides above this threshold.
+
+
+
+SQL SCRIPTS 
+retail_data_clean - Data importing and cleaing . Dates are converted to "Date" format . Monthly revenue report and MOM revenue and quantity  changes .
+Retial_cancellation - Non product cancellation identified 
+customer_cancellation - Classsfying customers based on cancellation and categorizing them .
+Pricing_inconsistency - Identifying zero order items and implied revenue loss
+High_value_prod - Identifying anamalous stockcode with extreme price varaitaion.
+
+
+
+
+
+
+
